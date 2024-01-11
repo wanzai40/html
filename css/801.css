@@ -59,7 +59,7 @@
 
 			@font-face {
 				font-family: MD;
-				src: url(../MD.ttf);
+				src: url(./MD.ttf);
 			}
 
 			h2 {
