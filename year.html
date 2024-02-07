@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+           /* background-color: #940; /* 修改背景颜色为红色 */
+           background-image: url(https://file.xiazaii.com/file/xiazaii/201812231923/1_181219202952_5.jpg);
+            font-family: Arial, sans-serif;
+        }
+        h1,p{  position: relative;
+  top: 60px; right
+}
+
+        h1 {
+            color: #f00; /* 修改标题颜色为白色 */
+            text-align: center;
+            font-size:34px;
+                 text-shadow: 3px 3px #000000;  
+
+        }
+
+        a{position: relative;
+  top: 230px; left:60px;font-size:23px; text-decoration: none ;}
+
+        video{position: relative;
+  top: 60px; right}
+
+  img{position: relative;
+  top: 370px; left:170px}
+
+        p {
+            color: #0000FF;
+            text-align: center;
+            letter-spacing: 0.2rem;
+    font-size: 1.5rem;
+    background-image: -webkit-linear-gradient(left, #147B96, #E6D205 25%, #147B96 50%, #E6D205 75%, #147B96);
+    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text;
+    -webkit-background-size: 200% 100%;
+
+-webkit-animation: maskedAnimation 4s infinite linear;
+        }
+        @keyframes maskedAnimation {
+    0% {
+        background-position: 0 0;
+    }
+
+    100% {
+        background-position: -100% 0;
+    }
+}
+    </style>
+</head>
+<body>
+    <h1>2024年</h1>
+    <p>祝</p>
+    <p>wz朋友圈里的好友</p>
+    <p>快乐每一天</p>
+    <p>❤️</p>
+
+    <!-- 添加一个音乐播放器，自动播放“新年好”这首歌 -->
+   <!-- <audio src="http://m10.music.126.net/20240119202306/74b183c3101844d8593c5d17f46f4b2a/yyaac/obj/wonDkMOGw6XDiTHCmMOi/14054889905/af4e/8a7b/5632/86d4c4fa831e64ac160429f6a09ddf91.m4a" autoplay loop>
+        你的浏览器不支持音频元素。    </audio>-->
+        <!-- 这里是一个隐藏的音频元素，你可以替换 src 属性为你想要的音乐文件的路径 -->
+<audio id="music" src="https://vdse.bdstatic.com//351648c4f5f45393275ae5a997c7daa9.mp4?authorization=bce-auth-v1%2F40f207e648424f47b2e3dfbb1014b1a5%2F2024-01-27T03%3A42%3A02Z%2F-1%2Fhost%2Fcbe560c4b3f1de6b27b478ae34d3ef0dcddbcf39c042c89367f4a34429e3e84e" hidden></audio>
+<!-- 这里是一个控制音乐播放的按钮，你可以替换 src 属性为你想要的图片的路径 -->
+<img id="button" src="http://p2.music.126.net/A157zQR5rR66LMatjYAucQ==/109951164595606537.jpg?imageView&thumbnail=50y50&quality=15&tostatic=0" width="50" height="50">
+<!-- 这里是一个引入 jQuery 库的标签，你可以从滴滴开源平台的 [cube-ui] 或者 [mand-mobile] 项目中找到更多的移动端组件库 -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  // 这里是一个使用 jQuery 的脚本，用来实现音乐的自动播放和按钮的交互
+  $(document).ready(function() {
+    // 获取音频元素和按钮元素的引用
+    var music = $("#music")[0];
+    var button = $("#button");
+    // 设置一个标志，用来记录音乐是否正在播放
+    var playing = false;
+    // 尝试调用音频元素的 play 方法，如果成功，就设置标志为 true，并改变按钮的样式
+    music.play().then(function() {
+      playing = true;
+      button.css("opacity", 0.5);
+    }).catch(function(error) {
+      // 如果失败，就显示一个提示信息，让用户点击按钮开始播放
+      alert("请点击按钮开始播放音乐");
+    });
+    // 给按钮添加一个点击事件的监听器，用来切换音乐的播放和暂停状态
+    button.click(function() {
+      // 如果音乐正在播放，就暂停音乐，并设置标志为 false，并改变按钮的样式
+      if (playing) {
+        music.pause();
+        playing = false;
+        button.css("opacity", 1);
+      } else {
+        // 如果音乐没有播放，就开始播放音乐，并设置标志为 true，并改变按钮的样式
+        music.play();
+        playing = true;
+        button.css("opacity", 0.5);
+      }
+    });
+  });
+</script>
+
+<a href="https://yanhua.w3h5.com/">在此处点放烟花</a>
+</body>
+</html>
