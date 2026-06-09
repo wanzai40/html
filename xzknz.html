@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>选择转盘 · 轻简记录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #f5f7fb;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* 现代白色卡片容器 */
+        .wheel-app {
+            max-width: 580px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 52px;
+            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+            padding: 28px 24px 32px;
+            transition: all 0.2s;
+        }
+
+        /* 核心区域 */
+        .wheel-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .wheel-wrapper {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+            background: #fefaf0;
+            border-radius: 50%;
+            box-shadow: 0 18px 30px -10px rgba(0, 0, 0, 0.12), 0 0 0 6px #ffffff, 0 0 0 10px #eaeef3;
+            transition: box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        /* 简约指针指示器 */
+        .pointer-indicator {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .pointer-arrow {
+            width: 0;
+            height: 0;
+            border-left: 16px solid transparent;
+            border-right: 16px solid transparent;
+            border-top: 28px solid #3a7b5c;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.1));
+        }
+        .current-label {
+            background: #ffffffea;
+            backdrop-filter: blur(4px);
+            padding: 6px 16px;
+            border-radius: 80px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #1f3b2c;
+            margin-top: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            border: 0.5px solid #dcf0e6;
+            white-space: nowrap;
+        }
+        .current-label span {
+            font-weight: 700;
+            color: #2b7a4b;
+            font-size: 0.9rem;
+            margin-left: 6px;
+            background: #eef6f2;
+            padding: 2px 8px;
+            border-radius: 40px;
+        }
+
+        /* 开始按钮独立一排 */
+        .spin-action {
+            margin: 4px 0 28px 0;
+            display: flex;
+            justify-content: center;
+        }
+        .btn-spin {
+            background: #2c6e49;
+            border: none;
+            padding: 16px 28px;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: white;
+            width: 85%;
+            max-width: 280px;
+            letter-spacing: 2px;
+            box-shadow: 0 6px 0 #1a4730;
+            transition: all 0.08s linear;
+            cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            touch-action: manipulation;
+        }
+        .btn-spin:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #1a4730;
+        }
+
+        /* 编辑区 */
+        .editor-card {
+            background: #f9fafc;
+            border-radius: 36px;
+            padding: 20px 20px;
+            margin-top: 4px;
+            border: 1px solid #eef2f8;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #3b4e44;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+            letter-spacing: -0.2px;
+        }
+        input, textarea {
+            width: 100%;
+            background: white;
+            border: 1px solid #dce5ec;
+            border-radius: 28px;
+            padding: 12px 18px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            color: #1e2f28;
+            outline: none;
+            transition: 0.2s;
+        }
+        textarea {
+            resize: vertical;
+            font-family: 'SF Mono', monospace;
+            line-height: 1.4;
+        }
+        input:focus, textarea:focus {
+            border-color: #2c6e49;
+            box-shadow: 0 0 0 3px rgba(44, 110, 73, 0.15);
+        }
+
+        /* 选项徽章 */
+        .badge-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 12px 0 16px;
+        }
+        .opt-badge {
+            background: #ecf3ef;
+            color: #1a3a2b;
+            padding: 6px 16px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.05s linear;
+            border: 0.5px solid #d1dfd7;
+        }
+        .opt-badge button {
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #8d6b48;
+            padding: 0 4px;
+            border-radius: 20px;
+            line-height: 1;
+        }
+        .opt-badge button:active {
+            color: #b34e1a;
+            transform: scale(1.1);
+        }
+
+        /* 3个按钮：主次明确，刷新最重要，示例其次，速决移除 */
+        .action-row {
+            display: flex;
+            gap: 14px;
+            margin-top: 8px;
+        }
+        .action-row button {
+            flex: 1;
+            border: none;
+            padding: 12px 0;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.1s;
+            font-family: inherit;
+            touch-action: manipulation;
+        }
+        .btn-refresh {
+            background: #2c6e49;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            border: none;
+        }
+        .btn-refresh:active {
+            background: #205c3d;
+            transform: scale(0.97);
+        }
+        .btn-example {
+            background: #eef2f5;
+            color: #2c5a44;
+            border: 0.5px solid #d9e2e9;
+        }
+        .btn-example:active {
+            background: #e2e8ef;
+            transform: scale(0.97);
+        }
+        /* 速决按钮已移除，但保留样式无意义，直接不用 */
+
+        /* 结果栏 */
+        .result-modern {
+            background: #f3f6f9;
+            border-radius: 48px;
+            padding: 12px 20px;
+            margin: 16px 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 0.5px solid #e2e9f0;
+        }
+        .result-modern span:first-child {
+            font-weight: 500;
+            color: #446855;
+            font-size: 0.85rem;
+        }
+        #resultText {
+            font-weight: 800;
+            font-size: 1.3rem;
+            background: white;
+            padding: 5px 16px;
+            border-radius: 40px;
+            color: #2b6a47;
+            letter-spacing: -0.2px;
+            box-shadow: inset 0 1px 2px #00000008, 0 1px 2px white;
+        }
+
+        /* 历史记录表 */
+        .history-section {
+            margin-top: 12px;
+            background: #ffffff;
+            border-radius: 32px;
+            border: 1px solid #eef2f8;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 14px 18px 8px 18px;
+            border-bottom: 1px solid #edf2f7;
+        }
+        .history-title {
+            font-weight: 700;
+            color: #2c5a44;
+            font-size: 0.85rem;
+            letter-spacing: -0.2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .clear-history {
+            background: none;
+            border: none;
+            font-size: 0.7rem;
+            color: #9bb7ab;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .clear-history:active {
+            background: #f0f3f5;
+            color: #6b8f7c;
+        }
+        .history-list {
+            max-height: 210px;
+            overflow-y: auto;
+            padding: 6px 0;
+        }
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 18px;
+            border-bottom: 1px solid #f0f4f9;
+            font-size: 0.85rem;
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        .history-decision {
+            font-weight: 600;
+            color: #1e3b2e;
+            background: #f5f9f0;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+        }
+        .history-time {
+            color: #95ad9f;
+            font-size: 0.7rem;
+            font-family: monospace;
+        }
+        .empty-history {
+            text-align: center;
+            padding: 28px 20px;
+            color: #b9cfc2;
+            font-size: 0.8rem;
+        }
+        .info-tip {
+            font-size: 0.65rem;
+            color: #8ca397;
+            text-align: center;
+            margin-top: 18px;
+        }
+
+        @media (max-width: 500px) {
+            .wheel-app {
+                padding: 20px 18px 26px;
+            }
+            .btn-spin {
+                width: 90%;
+                padding: 14px 20px;
+                font-size: 1.2rem;
+            }
+            .current-label {
+                font-size: 0.7rem;
+                padding: 4px 12px;
+            }
+            .opt-badge {
+                font-size: 0.7rem;
+                padding: 5px 12px;
+            }
+            .result-modern span:first-child {
+                font-size: 0.75rem;
+            }
+            #resultText {
+                font-size: 1.1rem;
+                padding: 3px 14px;
+            }
+            .history-item {
+                padding: 8px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="wheel-app">
+    <!-- 上半区：转盘 + 指向标签 -->
+    <div class="wheel-section">
+        <div class="wheel-wrapper">
+            <canvas id="wheelCanvas" width="480" height="480" style="width:100%; height:auto; max-width:480px; aspect-ratio:1/1"></canvas>
+            <div class="pointer-indicator">
+                <div class="pointer-arrow"></div>
+                <div class="current-label">📍 当前指向 <span id="hoverHint">——</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 独立开始旋转按钮 -->
+    <div class="spin-action">
+        <button id="spinBtn" class="btn-spin">✨ 开始旋转 ✨</button>
+    </div>
+
+    <!-- 编辑区域 -->
+    <div class="editor-card">
+        <div class="input-group">
+            <label>📌 转盘标题</label>
+            <input type="text" id="titleInput" placeholder="例如：晚餐吃什么" value="✨ 今日抉择">
+        </div>
+        <div class="input-group">
+            <label>✏️ 选项清单（每行一个 | 2~12个 | 推荐4~7个）</label>
+            <textarea id="optionsInput" rows="3" placeholder="看电影&#10;吃火锅&#10;去健身&#10;阅读时间&#10;旅行计划"></textarea>
+        </div>
+        
+        <!-- 动态选项徽章 -->
+        <div id="badgeContainer" class="badge-area"></div>
+        
+        <!-- 两个主要按钮：刷新转盘（主），加载示例（次），已移除一键速决 -->
+        <div class="action-row">
+            <button id="updateWheelBtn" class="btn-refresh">🔄 刷新转盘</button>
+            <button id="resetExampleBtn" class="btn-example">✨ 加载示例</button>
+        </div>
+    </div>
+
+    <!-- 结果展示区 -->
+    <div class="result-modern">
+        <span>🎲 本次结果</span>
+        <span id="resultText">——</span>
+    </div>
+
+    <!-- 新增：历史记录表 -->
+    <div class="history-section">
+        <div class="history-header">
+            <div class="history-title">📋 决策记录表</div>
+            <button id="clearHistoryBtn" class="clear-history">清空记录</button>
+        </div>
+        <div id="historyListContainer" class="history-list">
+            <div class="empty-history">暂无记录，旋转转盘后自动记录</div>
+        </div>
+    </div>
+    <div class="info-tip">
+        💡 轻触转盘也可旋转 | 每次旋转结果自动保存至记录表 | 点击「刷新转盘」更新选项
+    </div>
+</div>
+
+<script>
+    (function(){
+        // DOM 元素
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const titleInput = document.getElementById('titleInput');
+        const optionsInput = document.getElementById('optionsInput');
+        const badgeContainer = document.getElementById('badgeContainer');
+        const updateBtn = document.getElementById('updateWheelBtn');
+        const resetExampleBtn = document.getElementById('resetExampleBtn');
+        const spinBtn = document.getElementById('spinBtn');
+        const resultTextSpan = document.getElementById('resultText');
+        const hoverHintSpan = document.getElementById('hoverHint');
+        const historyContainer = document.getElementById('historyListContainer');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+        // 转盘数据
+        let currentSegments = [];          // [{ name, color }]
+        let currentRotation = 0;
+        let animating = false;
+        let animFrameId = null;
+        const spinDuration = 1600;
+
+        // 历史记录数组
+        let historyRecords = [];    // 存储 { decision: string, timestamp: string, dateTime: Date }
+
+        // ---------- 配色：清新现代但高对比，转盘字体清晰大号 ----------
+        const colorPalette = [
+            '#6C9E8F', '#E9B35F', '#F4A261', '#86A69D', '#B7B17A', '#C7B9A2', '#A7C5A1', '#DCB28A',
+            '#72A98F', '#E4B363', '#D49C6C', '#9DBF9E', '#B0B27F', '#C2A27F', '#EECB8B', '#9CAF88'
+        ];
+        function getSegmentColor(idx) {
+            return colorPalette[idx % colorPalette.length];
+        }
+
+        // 解析选项
+        function parseOptions(raw) {
+            let lines = raw.split(/\r?\n/);
+            let items = lines.map(l => l.trim()).filter(l => l !== "");
+            if(items.length < 2) {
+                if(items.length === 0) return ["选项A", "选项B"];
+                if(items.length === 1) return [items[0], "另一个选项"];
+            }
+            if(items.length > 12) items = items.slice(0,12);
+            return items;
+        }
+
+        // 更新徽章，支持删除
+        function updateBadges(segments) {
+            badgeContainer.innerHTML = '';
+            if(!segments.length) return;
+            segments.forEach((seg, idx) => {
+                const badge = document.createElement('div');
+                badge.className = 'opt-badge';
+                badge.innerHTML = `
+                    ${escapeHtml(seg.name.length > 14 ? seg.name.slice(0,12)+'…' : seg.name)}
+                    <button class="remove-opt" data-index="${idx}" aria-label="移除">✖</button>
+                `;
+                badgeContainer.appendChild(badge);
+            });
+            document.querySelectorAll('.remove-opt').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idx = parseInt(btn.getAttribute('data-index'));
+                    if(!isNaN(idx) && currentSegments.length > 2) {
+                        currentSegments.splice(idx, 1);
+                        syncTextareaFromSegments();
+                        rebuildFromCurrent();
+                        updateBadges(currentSegments);
+                        resultTextSpan.innerText = '——';
+                        updateCurrentPointerText();
+                    } else if(currentSegments.length <= 2) {
+                        alert("至少保留两个选项才能转动哦～");
+                    }
+                });
+            });
+        }
+
+        function syncTextareaFromSegments() {
+            let lines = currentSegments.map(s => s.name).join('\n');
+            optionsInput.value = lines;
+        }
+
+        // 绘制转盘 —— 字体变大且更清晰 (根据扇区数量动态增大字号)
+        function drawWheel(rotationRad = currentRotation) {
+            if(!ctx || !canvas) return;
+            const w = canvas.width, h = canvas.height;
+            const radius = w / 2;
+            const centerX = radius, centerY = radius;
+            const count = currentSegments.length;
+            ctx.clearRect(0, 0, w, h);
+            if(count === 0) {
+                ctx.fillStyle = '#faf5e8';
+                ctx.fillRect(0,0,w,h);
+                ctx.fillStyle = '#557c66';
+                ctx.font = '500 18px Inter, system-ui';
+                ctx.fillText("添加选项", centerX-55, centerY);
+                return;
+            }
+            const angleStep = (Math.PI * 2) / count;
+            for(let i=0; i<count; i++) {
+                const start = i * angleStep + rotationRad;
+                const end = (i+1) * angleStep + rotationRad;
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, start, end);
+                ctx.closePath();
+                ctx.fillStyle = currentSegments[i].color;
+                ctx.fill();
+                ctx.save();
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 2.8;
+                ctx.stroke();
+                // 绘制文字：字体更大更粗，分辨率优化
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(start + angleStep/2);
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                let textRadius = radius * 0.68;
+                // 动态字体大小：基数更大
+                let fontSize = 19;
+                if(count >= 6) fontSize = 17;
+                if(count >= 8) fontSize = 15;
+                if(count >= 10) fontSize = 13;
+                if(count >= 12) fontSize = 12;
+                ctx.font = `700 ${fontSize}px "Inter", system-ui, -apple-system, "Segoe UI"`;
+                ctx.fillStyle = "#1C2E26";
+                ctx.shadowBlur = 0;
+                let short = currentSegments[i].name;
+                if(short.length > 13) short = short.slice(0,11)+'..';
+                // 增加背景光晕增加可读性
+                ctx.shadowColor = "rgba(255,255,200,0.5)";
+                ctx.fillText(short, textRadius, 6);
+                ctx.shadowColor = "transparent";
+                ctx.restore();
+            }
+            // 圆心装饰
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius*0.09, 0, Math.PI*2);
+            ctx.fillStyle = "#FEF4E3";
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius*0.045, 0, Math.PI*2);
+            ctx.fillStyle = "#BB8F63";
+            ctx.fill();
+        }
+
+        function rebuildFromCurrent() {
+            if(animating) {
+                cancelAnimationFrame(animFrameId);
+                animating = false;
+            }
+            currentRotation = 0;
+            drawWheel(0);
+            updateCurrentPointerText();
+        }
+
+        function getCurrentSelectedOption(rotRad) {
+            if(!currentSegments.length) return null;
+            const count = currentSegments.length;
+            const angleStep = (Math.PI * 2) / count;
+            const pointerAngle = -Math.PI / 2;
+            for(let i=0; i<count; i++) {
+                let start = i * angleStep + rotRad;
+                let end = (i+1) * angleStep + rotRad;
+                let normPointer = ((pointerAngle % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+                let normStart = ((start % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+                let normEnd = ((end % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+                if(normStart < normEnd) {
+                    if(normPointer >= normStart && normPointer < normEnd) return currentSegments[i];
+                } else {
+                    if(normPointer >= normStart || normPointer < normEnd) return currentSegments[i];
+                }
+            }
+            return currentSegments[0];
+        }
+
+        function updateCurrentPointerText() {
+            if(!currentSegments.length) {
+                hoverHintSpan.innerText = '无选项';
+                return;
+            }
+            const selected = getCurrentSelectedOption(currentRotation);
+            if(selected) hoverHintSpan.innerText = selected.name;
+            else hoverHintSpan.innerText = '——';
+        }
+
+        // 添加记录至历史表
+        function addHistoryRecord(decisionText) {
+            if(!decisionText || decisionText === '——') return;
+            const now = new Date();
+            const timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+            historyRecords.unshift({ decision: decisionText, timestamp: timeStr, rawDate: now });
+            // 最多保留30条
+            if(historyRecords.length > 30) historyRecords.pop();
+            renderHistoryList();
+        }
+
+        function renderHistoryList() {
+            if(!historyContainer) return;
+            if(historyRecords.length === 0) {
+                historyContainer.innerHTML = '<div class="empty-history">✨ 暂无记录，旋转转盘后自动记录</div>';
+                return;
+            }
+            let html = '';
+            historyRecords.forEach(rec => {
+                html += `
+                    <div class="history-item">
+                        <span class="history-decision">${escapeHtml(rec.decision)}</span>
+                        <span class="history-time">${escapeHtml(rec.timestamp)}</span>
+                    </div>
+                `;
+            });
+            historyContainer.innerHTML = html;
+        }
+
+        function clearHistory() {
+            historyRecords = [];
+            renderHistoryList();
+        }
+
+        // 动画到目标弧度
+        function animateToTarget(targetRot, durationMs, onFinish) {
+            if(animating) return false;
+            const startRot = currentRotation;
+            const startTime = performance.now();
+            animating = true;
+            function step(now) {
+                const elapsed = now - startTime;
+                let t = Math.min(1, elapsed / durationMs);
+                const easeOut = 1 - Math.pow(1-t, 2.8);
+                const newRot = startRot + (targetRot - startRot) * easeOut;
+                currentRotation = newRot;
+                drawWheel(currentRotation);
+                if(t < 1) {
+                    animFrameId = requestAnimationFrame(step);
+                } else {
+                    currentRotation = targetRot;
+                    drawWheel(currentRotation);
+                    const finalPick = getCurrentSelectedOption(currentRotation);
+                    if(finalPick) {
+                        const decision = finalPick.name;
+                        resultTextSpan.innerText = decision;
+                        addHistoryRecord(decision);
+                        updateCurrentPointerText();
+                    } else {
+                        resultTextSpan.innerText = "再转一次";
+                    }
+                    animating = false;
+                    cancelAnimationFrame(animFrameId);
+                    if(onFinish) onFinish();
+                    updateCurrentPointerText();
+                }
+            }
+            if(animFrameId) cancelAnimationFrame(animFrameId);
+            animFrameId = requestAnimationFrame(step);
+            return true;
+        }
+
+        // 旋转核心
+        function startSpin() {
+            if(animating) {
+                resultTextSpan.innerText = "转动中...";
+                setTimeout(() => { if(!animating && currentSegments.length) updateCurrentPointerText(); }, 500);
+                return;
+            }
+            if(!currentSegments.length || currentSegments.length < 2) {
+                alert("请至少填写两个选项～");
+                return;
+            }
+            const count = currentSegments.length;
+            const angleStep = (Math.PI * 2) / count;
+            const pointerAngle = -Math.PI/2;
+            const targetIdx = Math.floor(Math.random() * count);
+            const randomOffset = Math.random() * angleStep;
+            const targetSectorPos = targetIdx * angleStep + randomOffset;
+            let desiredFinal = pointerAngle - targetSectorPos;
+            desiredFinal = ((desiredFinal % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+            const extraRounds = 6 + Math.floor(Math.random() * 8);
+            let delta = desiredFinal - currentRotation;
+            delta = ((delta % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+            const finalRotation = currentRotation + delta + extraRounds * 2 * Math.PI;
+            animateToTarget(finalRotation, spinDuration);
+        }
+
+        // 刷新UI并重置转盘
+        function refreshFromUI() {
+            if(animating) return;
+            let rawOptions = optionsInput.value;
+            let optionNames = parseOptions(rawOptions);
+            let newSegments = [];
+            for(let i=0; i<optionNames.length; i++) {
+                newSegments.push({
+                    name: optionNames[i],
+                    color: getSegmentColor(i)
+                });
+            }
+            currentSegments = newSegments;
+            updateBadges(currentSegments);
+            rebuildFromCurrent();
+            resultTextSpan.innerText = '——';
+            updateCurrentPointerText();
+        }
+
+        function loadExample() {
+            titleInput.value = "🎯 放松时光";
+            optionsInput.value = "看电影\n听音乐\n约饭\n散步发呆\n写日记";
+            refreshFromUI();
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>]/g, function(m) {
+                if(m === '&') return '&amp;';
+                if(m === '<') return '&lt;';
+                if(m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function handleResize() { if(canvas) drawWheel(currentRotation); }
+        window.addEventListener('resize', () => { setTimeout(handleResize, 80); });
+
+        // 绑定事件
+        updateBtn.addEventListener('click', refreshFromUI);
+        resetExampleBtn.addEventListener('click', loadExample);
+        spinBtn.addEventListener('click', startSpin);
+        canvas.addEventListener('click', (e) => { e.stopPropagation(); startSpin(); });
+        clearHistoryBtn.addEventListener('click', clearHistory);
+
+        // 初始化默认转盘
+        function initDefault() {
+            titleInput.value = "🍃 周末计划";
+            optionsInput.value = "去徒步\n看展\n宅家追剧\n朋友聚会\n学习技能";
+            refreshFromUI();
+            historyRecords = [];
+            renderHistoryList();
+        }
+        initDefault();
+    })();
+</script>
+</body>
+</html>
